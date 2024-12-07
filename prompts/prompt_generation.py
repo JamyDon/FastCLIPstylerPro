@@ -120,10 +120,16 @@ def generate_prompts_from_artemis(utterances, max_num_prompts=10):
         instruction += "<utterance> " + utterance + " </utterance>\n"
         instruction += "Include your description between the tags <description> and </description> and make it short and sweet. Do not include any other information."
 
-        response = assistant.inference(instruction, temperature=0.5, max_tokens=64)
-        prompt = response.split("<description>")[1].split("</description>")[0].strip()
+        try:
+            response = assistant.inference(instruction, temperature=0.5, max_tokens=64)
+            prompt = response.split("<description>")[1].split("</description>")[0].strip()
+        except Exception as e:
+            prompt = ""
+            print(e)
+            print("Continuing...")
+            continue
 
-        if len(prompt.split()) > 16:
+        if len(prompt.split()) > 16 or prompt == "":
             continue
 
         prompts.append(prompt)
@@ -142,10 +148,16 @@ def further_augment_prompts(existing_prompts, num_new_prompts=10, num_demonstrat
             instruction += "<prompt> " + demonstration + " </prompt>\n"
         instruction += "Include your prompt between the tags <prompt> and </prompt>. Make it short and sweet. Do not include any other information."
 
-        response = assistant.inference(instruction, temperature=0.7, max_tokens=64)
-        prompt = response.split("<prompt>")[1].split("</prompt>")[0].strip()
+        try:
+            response = assistant.inference(instruction, temperature=0.7, max_tokens=64)
+            prompt = response.split("<prompt>")[1].split("</prompt>")[0].strip()
+        except Exception as e:
+            prompt = ""
+            print(e)
+            print("Continuing...")
+            continue
 
-        if len(prompt.split()) > 16:
+        if len(prompt.split()) > 16 or prompt == "":
             continue
 
         new_prompts.append(prompt)
