@@ -8,7 +8,14 @@ from styleaug.text_embedder import TextEmbedder
 from sentence_transformers import SentenceTransformer
 import clip
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
+if torch.cuda.is_available():
+    print('Using GPU')
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    print('Using MPS')
+    device = torch.device("mps")
 
 class FastCLIPStyler:
 

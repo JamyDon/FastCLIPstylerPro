@@ -1,12 +1,20 @@
 import streamlit as st
 from PIL import Image
+import torch.backends
+import torch.backends.mps
 from inference import TrainStylePredictor
 from torchvision import transforms
 import numpy as np
 import torch
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
+if torch.cuda.is_available():
+    print("Using GPU")
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    print("Using MPS")
+    device = torch.device("mps")
 
 @st.cache_resource
 def load_model():
