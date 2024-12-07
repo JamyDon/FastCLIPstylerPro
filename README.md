@@ -7,7 +7,7 @@ Text-based Image Style Transfer with Better Generalizability
 <p align="center">
 Chi Zhang, Che Wang, Jun-Zhe Wang, Chenming Tang<sup>*</sup>
 <br>
-<tt>{tangchenming}@stu.pku.edu.cn<tt>
+<tt>{tangchenming}@stu.pku.edu.cn</tt>
 <br>
 School of Computer Science, Peking University
 <br>
