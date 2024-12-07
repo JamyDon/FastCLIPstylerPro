@@ -1,6 +1,7 @@
 .vscode/
-*.csv
+artemis/
 api_key.json
+gpt2/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
