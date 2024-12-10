@@ -231,7 +231,6 @@ def write_prompts_to_json(path, prompts):
 
 
 def main():
-    """
     # manual keywords
     colors, objects, art_styles, textures = read_art_info_from_json("manual_keywords.json")
 
@@ -251,14 +250,6 @@ def main():
     write_art_info_to_json("augmented_keywords.json", colors, objects, art_styles, textures)
     keywords = colors + objects + art_styles + textures
     print(f'Number of colors: {len(colors)}\nNumber of objects: {len(objects)}\nNumber of art styles: {len(art_styles)}\nNumber of textures: {len(textures)}')
-    """
-
-    ### tmp ###
-    artemis_art_style_keywords, artemis_utterances = read_art_info_from_csv(
-        ["artemis/artemis_dataset_release_v0.csv", "artemis/ola_dataset_release_v0.csv"]
-    )
-    colors, objects, art_styles, textures = read_art_info_from_json("augmented_keywords.json")
-    keywords = colors + objects + art_styles + textures
 
     # combine keywords
     combined_keywords = []
