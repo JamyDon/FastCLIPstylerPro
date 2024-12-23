@@ -44,7 +44,7 @@ class TextEmbedder(nn.Module):
 
     def load_model(self):
         if self.text_encoder == 'fastclipstyler':
-            self.load_state_dict(torch.load("styleaug/checkpoints/text_embedder_clip.pth", map_location=torch.device('cpu')), strict=True)
+            self.load_state_dict(torch.load("trained_text_embedder.pth", map_location=torch.device('cpu')), strict=True)
         elif self.text_encoder == 'edgeclipstyler':
             self.load_state_dict(torch.load("styleaug/checkpoints/text_embedder_bert.pth", map_location=torch.device('cpu')), strict=True)
 
