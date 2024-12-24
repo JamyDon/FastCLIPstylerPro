@@ -11,7 +11,7 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(128, 64),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(64, 1),  # 输出判别 [0, 1]
+            nn.Linear(64, 1),
             nn.Sigmoid(),
         )
 
@@ -39,16 +39,14 @@ for epoch in range(num_epochs):
         styler_embedding = styler_embedding.to(device)
         optimizer_D.zero_grad()
 
-        # 真实数据损失
-        real_labels = torch.ones((batch_size, 1), device=device)  # 标记真实样本
+        real_labels = torch.ones((batch_size, 1), device=device)
         real_loss = adversarial_loss(discriminator(styler_embedding), real_labels)
 
-        # 生成的样本 (假的 styler_embedding)
-        fake_styler_embedding = generator(text_embedding).detach()  # 生成假样本
-        fake_labels = torch.zeros((batch_size, 1), device=device)  # 标记生成样本
+        fake_styler_embedding = generator(text_embedding).detach()
+        fake_labels = torch.zeros((batch_size, 1), device=device)
         fake_loss = adversarial_loss(discriminator(fake_styler_embedding), fake_labels)
 
-        # 判别器的总损失
+
         d_loss = (real_loss + fake_loss) / 2
         d_loss.backward()
         optimizer_D.step()
@@ -56,16 +54,12 @@ for epoch in range(num_epochs):
 
         optimizer_G.zero_grad()
 
-        # 生成的样本 (使用生成器产生的样本)
         fake_styler_embedding = generator(text_embedding)
 
-        # 生成器的对抗损失（欺骗判别器，使判别器认为生成样本为真）
         g_adversarial_loss = adversarial_loss(discriminator(fake_styler_embedding), real_labels)
 
-        # 回归任务的 MSE 损失：生成的 `styler_embedding` 和真实的 `styler_embedding` 接近
         g_regression_loss = mse_loss(fake_styler_embedding, styler_embedding)
 
-        # 生成器的总损失
         g_loss = g_adversarial_loss + 0.5 * g_regression_loss
         g_loss.backward()
         optimizer_G.step()
