@@ -2,70 +2,42 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from styleaug.text_embedder import TextEmbedder
-
-class Discriminator(nn.Module):
-    def __init__(self, input_dim):
-        super(Discriminator, self).__init__()
-        self.model = nn.Sequential(
-            nn.Linear(input_dim, 128),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(128, 64),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(64, 1),
-            nn.Sigmoid(),
-        )
-
-    def forward(self, x):
-        return self.model(x)
-
+import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-generator = TextEmbedder('fastclipstyler').to(device)
-discriminator = Discriminator(input_dim=100).to(device)
-
-optimizer_G = optim.Adam(generator.parameters(), lr=1e-4, betas=(0.5, 0.999))
-optimizer_D = optim.Adam(discriminator.parameters(), lr=1e-4, betas=(0.5, 0.999))
-
-adversarial_loss = nn.BCELoss()
+text_styler_embedder = TextEmbedder('fastclipstyler').to(device)
+optimizer = optim.Adam(text_styler_embedder.parameters(), lr=1e-4, betas=(0.5, 0.999))
 mse_loss = nn.MSELoss()
-
+temperature = 0.07
 num_epochs = 50
 batch_size = 64
+
+def contrastive_loss(z1, z2, temperature=0.07):
+    batch_size = z1.size(0)
+    z1 = F.normalize(z1, dim=1)
+    z2 = F.normalize(z2, dim=1)
+    similarity_matrix = torch.mm(z1, z2.T)
+    positive_indices = torch.arange(batch_size).to(device)
+    labels = positive_indices
+    logits = similarity_matrix / temperature
+    loss = F.cross_entropy(logits, labels)
+    return loss
 
 for epoch in range(num_epochs):
     for batch_idx, (text_embedding, styler_embedding) in enumerate(dataloader):
         text_embedding = text_embedding.to(device)
         styler_embedding = styler_embedding.to(device)
-        optimizer_D.zero_grad()
-
-        real_labels = torch.ones((batch_size, 1), device=device)
-        real_loss = adversarial_loss(discriminator(styler_embedding), real_labels)
-
-        fake_styler_embedding = generator(text_embedding).detach()
-        fake_labels = torch.zeros((batch_size, 1), device=device)
-        fake_loss = adversarial_loss(discriminator(fake_styler_embedding), fake_labels)
-
-
-        d_loss = (real_loss + fake_loss) / 2
-        d_loss.backward()
-        optimizer_D.step()
-
-
-        optimizer_G.zero_grad()
-
-        fake_styler_embedding = generator(text_embedding)
-
-        g_adversarial_loss = adversarial_loss(discriminator(fake_styler_embedding), real_labels)
-
-        g_regression_loss = mse_loss(fake_styler_embedding, styler_embedding)
-
-        g_loss = g_adversarial_loss + 0.5 * g_regression_loss
-        g_loss.backward()
-        optimizer_G.step()
-
+        optimizer.zero_grad()
+        fake_styler_embedding = text_styler_embedder(text_embedding)
+        reconstruction_loss = mse_loss(fake_styler_embedding, styler_embedding)
+        contrastive_loss_value = contrastive_loss(fake_styler_embedding, styler_embedding, temperature)
+        total_loss = reconstruction_loss + contrastive_loss_value
+        total_loss.backward()
+        optimizer.step()
         if batch_idx % 100 == 0:
             print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{batch_idx}], "
-                  f"d_loss: {d_loss.item():.4f}, g_loss: {g_loss.item():.4f}")
-torch.save(generator.state_dict(), 'generator.pth')
-torch.save(discriminator.state_dict(), 'discriminator.pth')
+                  f"Reconstruction Loss: {reconstruction_loss.item():.4f}, "
+                  f"Contrastive Loss: {contrastive_loss_value.item():.4f}, "
+                  f"Total Loss: {total_loss.item():.4f}")
+
+torch.save(text_styler_embedder.state_dict(), 'text_styler_embedder_with_contrastive_loss.pth')
