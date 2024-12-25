@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from styleaug.text_embedder import TextEmbedder
 import torch.nn.functional as F
+import clip
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 text_styler_embedder = TextEmbedder('fastclipstyler').to(device)
@@ -11,6 +12,11 @@ mse_loss = nn.MSELoss()
 temperature = 0.07
 num_epochs = 50
 batch_size = 64
+clip_model, _ = clip.load('ViT-B/32', device, jit=False)
+clip_model.to(device)
+clip_model.requires_grad_(False)
+tokens = clip.tokenize([text_prompt[0]]).to(device)
+
 
 def contrastive_loss(z1, z2, temperature=0.07):
     batch_size = z1.size(0)
@@ -24,7 +30,8 @@ def contrastive_loss(z1, z2, temperature=0.07):
     return loss
 
 for epoch in range(num_epochs):
-    for batch_idx, (text_embedding, styler_embedding) in enumerate(dataloader):
+    for batch_idx, (text, styler_embedding) in enumerate(dataloader):
+        
         text_embedding = text_embedding.to(device)
         styler_embedding = styler_embedding.to(device)
         optimizer.zero_grad()
