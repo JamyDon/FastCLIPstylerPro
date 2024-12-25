@@ -23,10 +23,12 @@ class IndividualTensorTextDataset(Dataset):
     def __init__(self, tensors, texts):
         assert len(tensors) == len(texts), "Number of tensors and texts must match!"
         self.data = []
+        seen_texts = set()
         for tensor, task_texts in zip(tensors, texts):
             for i in range(tensor.shape[0]):
-                self.data.append((tensor[i].unsqueeze(0), task_texts[i]))
-
+                if task_texts[i] not in seen_texts:
+                    self.data.append((tensor[i].unsqueeze(0), task_texts[i]))
+                    seen_texts.add(task_texts[i])
     def __len__(self):
         return len(self.data)
 
@@ -63,6 +65,3 @@ final_dataloader = DataLoader(flattened_dataset, batch_size=10, shuffle=True)
 
 for batch_idx, (tensors_batch, texts_batch) in enumerate(final_dataloader):
     print(f"Batch {batch_idx}:")
-    print(f"  Tensor batch shape: {tensors_batch.shape}")
-    print(f"  Text batch: {texts_batch}")
-    input()
